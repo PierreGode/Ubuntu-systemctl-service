@@ -1,63 +1,68 @@
-#!/bin/sh                                                                                                         
-while true                                                                                                        
-do                                                                                                                
-dates=$( date +"%T" )                                                                                             
-addr1=$( echo "192.168.1.170" )                                                                                   
-addr2=$( echo "192.168.1.131")                                                                                    
-user1=$( nmap -sn $addr1 | egrep "scan report" | awk '{print $6}' | cut -d ')' -f1 | cut -d '(' -f2 )             
-user2=$( nmap -sn $addr2 | egrep "scan report" | awk '{print $6}' | cut -d ')' -f1 | cut -d '(' -f2 )             
-user1out=$(echo $user1)                                                                                           
-user2out=$(echo $user2)                                                                                           
-on=$( vcgencmd display_power )                                                                                    
-if [ "$user1out" = "$addr1" ]                                                                                     
-then                                                                                                              
-  if [ "$on" = "display_power=1" ]                                                                                
-  then                                                                                                            
-  echo "$dates screen is on for $addr1" | sudo tee -a /var/log/screen.log                                         
-  sleep 10                                                                                                        
-  exit                                                                                                            
-  else                                                                                                            
-  echo "$dates screen is off for $addr1 , but user is home. turning on screen" | sudo tee -a /var/log/screen.log  
-  vcgencmd display_power 1 2                                                                                      
-  sleep 10                                                                                                        
-  exit                                                                                                            
-  fi                                                                                                              
-else                                                                                                              
-echo "$dates user $addr1 is not home. checking for $addr2 .." | sudo tee -a /var/log/screen.log                   
-    if [ "$user2out" = "$addr2" ]                                                                                 
-    then                                                                                                          
-      if [ "$on" = "display_power=1" ]                                                                            
-      then                                                                                                        
-      echo "$dates screen is on for $addr2" | sudo tee -a /var/log/screen.log                                     
-      sleep 10                                                                                                    
-      exit                                                                                                        
-      else                                                                                                        
-      echo "$dates screen is off for $addr2 but user is home. turning on screen" | sudo tee -a /var/log/screen.log
-      vcgencmd display_power 1 2                                                                                  
-      sleep 10                                                                                                    
-      exit                                                                                                        
-      fi                                                                                                          
-    else                                                                                                          
-    echo "$dates no users are home. testing again..." | sudo tee -a /var/log/screen.log                           
-      if [ "$on" = "display_power=0" ]                                                                            
-      then                                                                                                        
-      echo "$dates Screen is already off" | sudo tee -a /var/log/screen.log                                       
-      sleep 10                                                                                                    
-      exit                                                                                                        
-      else                                                                                                        
-      sleep 10                                                                                                    
-      if ! ping -c 3 $addr1 && ping -c 3 $addr2                                                                   
-      then                                                                                                        
-      echo "$dates no ping response, turning off screen now" | sudo tee -a /var/log/screen.log                    
-      vcgencmd display_power 0 2                                                                                  
-      sleep 10                                                                                                    
-      exit                                                                                                        
-      else echo "$dates nmap failed but ping responded." | sudo tee -a /var/log/screen.log                        
-      sleep 10                                                                                                    
-      exit                                                                                                        
-      fi                                                                                                          
-      fi                                                                                                          
-fi                                                                                                                
-sleep 10                                                                                                          
-fi                                                                                                                
-done                                                                                                              
+#!/bin/bash
+ # make sure you have hping3 installed for this script
+ #Enter your ip of your device here
+DEVICES1="192.168.1.170"
+DEVICES2="192.168.1.131"
+dates=$( date +"%T" )
+display=$( vcgencmd display_power )
+user1(){
+for i in `echo $DEVICES1`; do
+    # Change dev and eth0 if needed
+    ip neigh flush dev eth0 $i
+    hping3 -2 -c 10 -p 5353 -i u1 $i -q >/dev/null 2>&1
+    sleep 1
+    # Only arp specific device, grep for a mac-address
+    status=`arp -an $i | awk '{print $4}' | grep "..:..:..:..:..:.."`
+    statusMessage="OFF"
+    #A mac will be 17 characters including the ":"
+    if [ ${#status} -eq 17 ]; then
+        echo "$dates Phone1 $i is detected!" | sudo tee -a /var/log/screen.log
+        statusMessage="ON"
+        if [ "$display" = "display_power=0" ]
+        then
+        echo "$dates screen is off for $DEVICES1 , but user is home. turning on screen" | sudo tee -a /var/log/screen.log
+        vcgencmd display_power 1 2
+        fi
+    else
+        echo "Phone $i is not present" | sudo tee -a /var/log/screen.log
+        statusMessage="OFF"
+        echo "$dates Phone1 $DEVICES1 is not home. checking for $DEVICES2 .." | sudo tee -a /var/log/screen.log
+        user2
+    fi
+done
+sleep 10
+exit
+}
+user2(){
+for i in `echo $DEVICES2`; do
+    # Change dev and eth0 if needed
+    ip neigh flush dev eth0 $i
+    hping3 -2 -c 10 -p 5353 -i u1 $i -q >/dev/null 2>&1
+    sleep 1
+    # Only arp specific device, grep for a mac-address
+    status1=`arp -an $i | awk '{print $4}' | grep "..:..:..:..:..:.."`
+    statusMessage="OFF"
+    #A mac will be 17 characters including the ":"
+    if [ ${#status1} -eq 17 ]; then
+        echo "$dates Phone2 $i is detected!" | sudo tee -a /var/log/screen.log
+        statusMessage="ON"
+        if [ "$display" = "display_power=0" ]
+        then
+        echo "$dates screen is off for $DEVICES2 , but user is home. turning on screen" | sudo tee -a /var/log/screen.log
+        vcgencmd display_power 1 2
+        fi
+    else
+        echo "Phone $i is not present" | sudo tee -a /var/log/screen.log
+        statusMessage="OFF"
+        if [ "$display" = "display_power=0" ]
+        then
+        echo "$dates Screen is already off" | sudo tee -a /var/log/screen.log
+        else
+        vcgencmd display_power 0 2
+        fi
+    fi
+done
+sleep 10
+exit
+}
+user1
