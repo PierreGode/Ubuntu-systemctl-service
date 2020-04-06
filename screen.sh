@@ -1,4 +1,8 @@
 #!/bin/bash
+ 
+ #This is a script created for raspberry Pi + monitor. turning the screen off when 2 users are away "from wifi"
+ # and turn on the screen when 1 or 2 users are back on wifi. 
+
  # make sure you have hping3 installed for this script
  #Enter your ip of your device here
 DEVICES1="192.168.1.170"
