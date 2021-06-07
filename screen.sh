@@ -5,8 +5,10 @@
 
  # make sure you have hping3 installed for this script
  #Enter your ip of your device here
+while true
+do
 DEVICES1="192.168.1.170"
-DEVICES2="192.168.1.131"
+DEVICES2="192.168.1.171"
 dates=$( date +"%T" )
 display=$( vcgencmd display_power )
 user1(){
@@ -20,17 +22,17 @@ for i in `echo $DEVICES1`; do
     statusMessage="OFF"
     #A mac will be 17 characters including the ":"
     if [ ${#status} -eq 17 ]; then
-        echo "$dates Phone1 $i is detected!" | sudo tee -a /var/log/screen.log
+        echo "$dates Phone1 $i is detected!" #| sudo tee -a /var/log/screen.log
         statusMessage="ON"
         if [ "$display" = "display_power=0" ]
         then
-        echo "$dates screen is off for $DEVICES1 , but user is home. turning on screen" | sudo tee -a /var/log/screen.log
+        echo "$dates screen is off for $DEVICES1 , but user is home. turning on screen" #| sudo tee -a /var/log/screen.log
         vcgencmd display_power 1 2
         fi
     else
-        echo "Phone $i is not present" | sudo tee -a /var/log/screen.log
+        echo "Phone $i is not present" #| sudo tee -a /var/log/screen.log
         statusMessage="OFF"
-        echo "$dates Phone1 $DEVICES1 is not home. checking for $DEVICES2 .." | sudo tee -a /var/log/screen.log
+        echo "$dates Phone1 $DEVICES1 is not home. checking for $DEVICES2 .." #| sudo tee -a /var/log/screen.log
         user2
     fi
 done
@@ -48,25 +50,26 @@ for i in `echo $DEVICES2`; do
     statusMessage="OFF"
     #A mac will be 17 characters including the ":"
     if [ ${#status1} -eq 17 ]; then
-        echo "$dates Phone2 $i is detected!" | sudo tee -a /var/log/screen.log
+        echo "$dates Phone2 $i is detected!" #| sudo tee -a /var/log/screen.log
         statusMessage="ON"
         if [ "$display" = "display_power=0" ]
         then
-        echo "$dates screen is off for $DEVICES2 , but user is home. turning on screen" | sudo tee -a /var/log/screen.log
+        echo "$dates screen is off for $DEVICES2 , but user is home. turning on screen" #| sudo tee -a /var/log/screen.log
         vcgencmd display_power 1 2
         fi
     else
-        echo "Phone $i is not present" | sudo tee -a /var/log/screen.log
+        echo "Phone $i is not present" #| sudo tee -a /var/log/screen.log
         statusMessage="OFF"
         if [ "$display" = "display_power=0" ]
         then
-        echo "$dates Screen is already off" | sudo tee -a /var/log/screen.log
+        echo "$dates Screen is already off" #| sudo tee -a /var/log/screen.log
         else
         vcgencmd display_power 0 2
         fi
     fi
 done
-sleep 10
+sleep 60
 exit
 }
 user1
+done
