@@ -10,6 +10,7 @@ do
 DEVICES1="192.168.1.170"
 DEVICES2="192.168.1.171"
 dates=$( date +"%T" )
+hour=$( date +"%H" )
 display=$( vcgencmd display_power )
 user1(){
 for i in `echo $DEVICES1`; do
@@ -27,7 +28,12 @@ for i in `echo $DEVICES1`; do
         if [ "$display" = "display_power=0" ]
         then
         echo "$dates screen is off for $DEVICES1 , but user is home. turning on screen" #| sudo tee -a /var/log/screen.log
-        vcgencmd display_power 1 2
+          if [ "$hour" -ge "23" ] || [ "$hour" -lt "06" ]
+          then
+          echo "Too late"
+          else
+          vcgencmd display_power 1 2
+          fi
         fi
     else
         echo "Phone $i is not present" #| sudo tee -a /var/log/screen.log
@@ -55,7 +61,12 @@ for i in `echo $DEVICES2`; do
         if [ "$display" = "display_power=0" ]
         then
         echo "$dates screen is off for $DEVICES2 , but user is home. turning on screen" #| sudo tee -a /var/log/screen.log
-        vcgencmd display_power 1 2
+          if [ "$hour" -ge "23" ] || [ "$hour" -lt "06" ]
+          then
+          echo "Too late"
+          else
+          vcgencmd display_power 1 2
+          fi
         fi
     else
         echo "Phone $i is not present" #| sudo tee -a /var/log/screen.log
