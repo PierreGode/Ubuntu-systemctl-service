@@ -12,15 +12,17 @@ echo "Type description of service"
 read description
 sudo echo "
 [Unit]
-Description= $description
-After=Network.target
+Description=$description
+After=network.target
 
 [Service]
 User=root
-Restart=always
-Type=forking
-Restart=10
+Restart=on-failure
+RestartSec=10
 ExecStart=/bin/sh "$path"
+
+[Install]
+WantedBy=multi-user.target
 
 [Install]
 WantedBy=multi-user.target" | tee -a /etc/systemd/system/$service.service
