@@ -10,13 +10,16 @@ echo "Type path of to the script including script ( /path/script.sh/py )"
 read path
 echo "Type description of service"
 read description
+echo "Type the name of the user running the service"
+read ruser
+
 sudo echo "
 [Unit]
 Description=$description
 After=network.target
 
 [Service]
-User=root
+User=$ruser
 Restart=on-failure
 RestartSec=10
 ExecStart=/bin/sh "$path"
